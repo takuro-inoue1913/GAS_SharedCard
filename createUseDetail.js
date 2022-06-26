@@ -23,26 +23,26 @@ function addCardUseDetail() {
 
   /** 該当メールがあった場合 */
   if(threads.length > 0) {
-    const alartData = [];
+    const alertData = [];
     const msgs = GmailApp.getMessagesForThreads(threads);
 
     /** テーブルの左端 */
-    const TALBE_LEFT_MOST = 1;
+    const TABLE_LEFT_MOST = 1;
     /** テーブルの右端 */
-    const TALBE_RIGHT_MOST = 7;
+    const TABLE_RIGHT_MOST = 7;
 
     /**
      * 検索ヒットしたMailを一つずつ処理する
      */
     for(let i=0; i < msgs.length; i++) {
       /** 最終行番号取得 */
-      let lastrow = SHARED_CARD_MANAGEMENT_SHEET.getLastRow();
+      let lastRow = SHARED_CARD_MANAGEMENT_SHEET.getlastRow();
       /** 新規で追加する行番号 */
-      let newrow = lastrow + 1
+      let newRow = lastRow + 1
 
       /** 元となるデータがある範囲 */
       const sourceRange = SHARED_CARD_MANAGEMENT_SHEET.getRange(
-        `${getColName(TALBE_LEFT_MOST)}${lastrow}:${getColName(TALBE_RIGHT_MOST)}${lastrow}`
+        `${getColName(TABLE_LEFT_MOST)}${lastRow}:${getColName(TABLE_RIGHT_MOST)}${lastRow}`
       );
 
       /** 本文を取得 */
@@ -54,7 +54,7 @@ function addCardUseDetail() {
 
       /** テーブルデータ取得 */
       const tableData = SHARED_CARD_MANAGEMENT_SHEET.getRange(
-        `${getColName(TALBE_LEFT_MOST)}6:${getColName(TALBE_RIGHT_MOST)}${lastrow}`
+        `${getColName(TABLE_LEFT_MOST)}6:${getColName(TABLE_RIGHT_MOST)}${lastRow}`
       ).getValues();
 
       /** 利用先の配列を取得 */
@@ -84,18 +84,18 @@ function addCardUseDetail() {
 
       /**
        * データ登録処理
-       * indexで取るとreturnで弾かれた分ずれるのでデータ挿入成功した分のみcrrentNumでカウントする
+       * indexで取るとreturnで弾かれた分ずれるのでデータ挿入成功した分のみcurrentNumでカウントする
        */
-      let crrentNum = 0;
+      let currentNum = 0;
       if (useTargets && useTargets.length && useTargets[0]) {
         useTargets.forEach((_, index) => {
           /** 比較用データ生成 */
           const compareData = [
             mailDate ?? new Date(),
-            histories[crrentNum] ?? new Date(),
-            useTargets[crrentNum] ?? '', 
+            histories[currentNum] ?? new Date(),
+            useTargets[currentNum] ?? '', 
             '共有', 
-            -Number(prices[crrentNum]) ?? 0, 
+            -Number(prices[currentNum]) ?? 0, 
             '未支払'
           ];
 
@@ -113,11 +113,11 @@ function addCardUseDetail() {
           }
 
           /** Slackアラート用のデータ作成 */
-          alartData.push(compareData);
+          alertData.push(compareData);
 
           /** オートフィルを反映させたい範囲 */
           const destination = SHARED_CARD_MANAGEMENT_SHEET.getRange(
-            `${getColName(TALBE_LEFT_MOST)}${newrow + crrentNum}:${getColName(TALBE_RIGHT_MOST)}${newrow + crrentNum}`
+            `${getColName(TABLE_LEFT_MOST)}${newRow + currentNum}:${getColName(TABLE_RIGHT_MOST)}${newRow + currentNum}`
           );
 
           /** 元のデータを新規で追加する行にコピーする */
@@ -125,55 +125,55 @@ function addCardUseDetail() {
 
           console.log(`
             受信日時: ${mailDate}, 
-            履歴: ${histories[crrentNum]}, 
-            購入品名: ${useTargets[crrentNum]}, 
-            金額: ${-Number(prices[crrentNum])}
+            履歴: ${histories[currentNum]}, 
+            購入品名: ${useTargets[currentNum]}, 
+            金額: ${-Number(prices[currentNum])}
           `)
 
           /** 受信日時: メール受信時間を設定 */
-          const dateSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`A${newrow + crrentNum}`);
+          const dateSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`A${newRow + currentNum}`);
           dateSell.setValue(mailDate ?? new Date());
 
           /** 履歴: 明細日付を設定 */
-          const historySell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`B${newrow + crrentNum}`);
-          historySell.setValue(histories[crrentNum] ?? new Date());
+          const historySell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`B${newRow + currentNum}`);
+          historySell.setValue(histories[currentNum] ?? new Date());
 
           /** 購入品名: 利用先を設定 */
-          const purchaseProductNameSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`C${newrow + crrentNum}`);
-          purchaseProductNameSell.setValue(useTargets[crrentNum] ?? '');
+          const purchaseProductNameSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`C${newRow + currentNum}`);
+          purchaseProductNameSell.setValue(useTargets[currentNum] ?? '');
 
           /** 支払者: デフォルトは「共有」に設定 */
-          const payerSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`D${newrow + crrentNum}`);
+          const payerSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`D${newRow + currentNum}`);
           payerSell.setValue('共有');
 
           /** 金額: 利用金額を負の数で設定 */
-          const priceSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`E${newrow + crrentNum}`);
+          const priceSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`E${newRow + currentNum}`);
           // 固定費の場合金額は0円にする
-          isFixedCost ? priceSell.setValue(0) : priceSell.setValue(-Number(prices[crrentNum]) ?? 0);
+          isFixedCost ? priceSell.setValue(0) : priceSell.setValue(-Number(prices[currentNum]) ?? 0);
 
           /** 支払状況フラグ設定 */
-          const paymentStatusSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`F${newrow + crrentNum}`);
+          const paymentStatusSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`F${newRow + currentNum}`);
           // 固定費の場合支払済にする
           isFixedCost ? paymentStatusSell.setValue('支払済') : paymentStatusSell.setValue('未入金');
 
           /** 固定費支払金額設定 */
-          const fixedCostSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`G${newrow + crrentNum}`);
+          const fixedCostSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`G${newRow + currentNum}`);
           // 固定費の場合支払済にする
-          isFixedCost ? fixedCostSell.setValue(-Number(prices[crrentNum]) ?? 0) : 0;
+          isFixedCost ? fixedCostSell.setValue(-Number(prices[currentNum]) ?? 0) : 0;
 
-          crrentNum++
+          currentNum++
         })
       }
     };
     /** Slackへデータ送信 */
-    if (alartData.length) {
-      slackAlart(alartData);
+    if (alertData.length) {
+      slackAlert(alertData);
     }
   }
 }
 
 /** スラックへの通知 */
-function slackAlart(data) {
+function slackAlert(data) {
   const slackMessage = data.map((val) => `
   ======================================
   利用日: ${Utilities.formatDate(val[1], 'JST', 'yyyy/M/d')}
