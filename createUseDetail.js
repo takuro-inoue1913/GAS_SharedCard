@@ -36,7 +36,7 @@ function addCardUseDetail() {
      */
     for(let i=0; i < msgs.length; i++) {
       /** 最終行番号取得 */
-      let lastRow = SHARED_CARD_MANAGEMENT_SHEET.getlastRow();
+      let lastRow = SHARED_CARD_MANAGEMENT_SHEET.getLastRow();
       /** 新規で追加する行番号 */
       let newRow = lastRow + 1
 
@@ -101,6 +101,7 @@ function addCardUseDetail() {
 
           /** 受信日時、購入品名もしくは金額が一緒の場合は処理をスキップ (重複を防ぐため) */
           if (tableData.find((val => {
+            console.log(`formatDate(val[0])`, val[0]);
             // 受信日時
             return formatDate(val[0]) === formatDate(compareData[0]) &&
               // 購入品名
