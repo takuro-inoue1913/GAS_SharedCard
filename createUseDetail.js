@@ -88,7 +88,7 @@ function addCardUseDetail() {
        */
       let currentNum = 0;
       if (useTargets && useTargets.length && useTargets[0]) {
-        useTargets.forEach((_, index) => {
+        useTargets.forEach((useTarget) => {
           /** 比較用データ生成 */
           const compareData = [
             mailDate ?? new Date(),
@@ -101,9 +101,9 @@ function addCardUseDetail() {
 
           /** 受信日時、購入品名もしくは金額が一緒の場合は処理をスキップ (重複を防ぐため) */
           if (tableData.find((val => {
-            console.log(`formatDate(val[0])`, val[0]);
             // 受信日時
-            return formatDate(val[0]) === formatDate(compareData[0]) &&
+            return val[0] && 
+              formatDate(val[0]) === formatDate(compareData[0]) &&
               // 購入品名
               (val[2] === compareData[2] ||
               // 金額
@@ -150,17 +150,17 @@ function addCardUseDetail() {
           /** 金額: 利用金額を負の数で設定 */
           const priceSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`E${newRow + currentNum}`);
           // 固定費の場合金額は0円にする
-          isFixedCost ? priceSell.setValue(0) : priceSell.setValue(-Number(prices[currentNum]) ?? 0);
+          isFixedCost(useTarget) ? priceSell.setValue(0) : priceSell.setValue(-Number(prices[currentNum]) ?? 0);
 
           /** 支払状況フラグ設定 */
           const paymentStatusSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`F${newRow + currentNum}`);
           // 固定費の場合支払済にする
-          isFixedCost ? paymentStatusSell.setValue('支払済') : paymentStatusSell.setValue('未入金');
+          isFixedCost(useTarget) ? paymentStatusSell.setValue('支払済') : paymentStatusSell.setValue('未入金');
 
           /** 固定費支払金額設定 */
           const fixedCostSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`G${newRow + currentNum}`);
           // 固定費の場合支払済にする
-          isFixedCost ? fixedCostSell.setValue(-Number(prices[currentNum]) ?? 0) : 0;
+          isFixedCost(useTarget) ? fixedCostSell.setValue(-Number(prices[currentNum]) ?? 0) : fixedCostSell.setValue(0);
 
           currentNum++
         })
@@ -184,12 +184,11 @@ function slackAlert(data) {
   `)
 
   const totalPrice = SHARED_CARD_MANAGEMENT_SHEET.getRange(`H3`).getValue();
-  const postUrl = 'https://hooks.slack.com/services/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';
+  const postUrl = 'https://hooks.slack.com/services/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';
   const username = 'たくふみシート Bot';
-  const jsonData =
-  {
-     "username" : username,
-     "text" : `<@U01AP8MAZNX> <@U01AP8QRE2X>\nスプレッドシートに記入完了しました！📝 支払い状況を更新してください💁‍♀️ \n
+  const jsonData ={
+    "username" : username,
+    "text" : `<@U01AP8MAZNX> <@U01AP8QRE2X>\nスプレッドシートに記入完了しました！📝 支払い状況を更新してください💁‍♀️ \n
   https://docs.google.com/spreadsheets/d/1EmOKt3h89vG1ahKSliNoKEGKmgax0VNnmVRK-pa4DmQ/edit#gid=31098273 \n
   ちなみに今の残り金額は ${totalPrice.toLocaleString()}円です。\n
   ${slackMessage}`
@@ -228,7 +227,7 @@ function toDoubleDigits(num){
 };
 
 /** 固定費かどうかの判定 (金額に入れたくないものを随時追加する) */
-function isFixedCost(useTarget){
+function isFixedCost(useTarget) {
   if (
     /ﾄｳｷﾖｳﾃﾞﾝﾘﾖｸ|ＰｉｎＴ|ﾃﾞｲﾃｲｱｲﾄｰﾝ|東京都水道局|東京ガス/.test(useTarget)
   ){
