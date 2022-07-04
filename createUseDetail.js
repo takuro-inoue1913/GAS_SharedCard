@@ -160,7 +160,7 @@ function addCardUseDetail() {
           /** 固定費支払金額設定 */
           const fixedCostSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`G${newRow + currentNum}`);
           // 固定費の場合支払済にする
-          isFixedCost(useTarget) ? fixedCostSell.setValue(-Number(prices[currentNum]) ?? 0) : fixedCostSell.setValue(0);
+          isFixedCost(useTarget) && fixedCostSell.setValue(-Number(prices[currentNum]) ?? 0);
 
           currentNum++
         })
