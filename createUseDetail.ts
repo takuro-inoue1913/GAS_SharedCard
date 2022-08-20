@@ -3,13 +3,31 @@ const TAKU_FUMI_SPREAD_SHEET = SpreadsheetApp.openById('1EmOKt3h89vG1ahKSliNoKEG
 const SHARED_CARD_MANAGEMENT_SHEET = TAKU_FUMI_SPREAD_SHEET.getSheetByName('共有カード運用管理')!;
 
 type AlertDataType = [
-  GoogleAppsScript.Base.Date | Date,
-  string,
-  string,
-  string,
-  number, 
-  string
+  /** 受信日 */
+  mailDate: GoogleAppsScript.Base.Date | Date,
+  /** 明細日付 */
+  history: string,
+  /** 利用先 */
+  useTargets: string,
+  /** 支払者 */
+  payer: string,
+  /** 金額 */
+  price: number, 
+  /** 支払状況 */
+  paymentStatus: string
 ]
+/** 受信日 INDEX */
+const MAIL_DATE_INDEX = 0;
+/** 明細日付 INDEX */
+const HISTORY_INDEX = 1;
+/** 利用先 INDEX */
+const USE_TARGETS_INDEX = 2;
+/** 支払者 INDEX */
+const PAYER_INDEX = 3;
+/** 金額 INDEX */
+const PRICE_INDEX = 4;
+/** 支払状況 INDEX */
+const PAYMENT_STATUS_INDEX = 5;
 
 function addCardUseDetail() {
   /** メール検索クエリを作成 */
@@ -112,12 +130,12 @@ function addCardUseDetail() {
           /** 受信日時、購入品名もしくは金額が一緒の場合は処理をスキップ (重複を防ぐため) */
           if (tableData.find((val => {
             // 受信日時
-            return val[0] && 
-              formatDate(val[0]) === formatDate(compareData[0]) &&
+            return val[MAIL_DATE_INDEX] && 
+              formatDate(val[MAIL_DATE_INDEX]) === formatDate(compareData[MAIL_DATE_INDEX]) &&
               // 購入品名
-              (val[2] === compareData[2] ||
+              (val[USE_TARGETS_INDEX] === compareData[USE_TARGETS_INDEX] ||
               // 金額
-              val[4] === compareData[4])
+              val[PRICE_INDEX] === compareData[PRICE_INDEX])
             })
           ) !== undefined){
             return;
@@ -187,9 +205,9 @@ function addCardUseDetail() {
 function slackAlert(data: AlertDataType[]) {
   const slackMessage = data.map((val) => `
   ======================================
-  利用日: ${val[1]}
-  購入品名: ${val[2]}
-  金額: ${Math.abs(val[4])}円
+  利用日: ${val[HISTORY_INDEX]}
+  購入品名: ${val[USE_TARGETS_INDEX]}
+  金額: ${Math.abs(val[PRICE_INDEX])}円
   ======================================
   `)
 
