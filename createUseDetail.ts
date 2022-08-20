@@ -212,7 +212,7 @@ function slackAlert(data: AlertDataType[]) {
   `)
 
   const totalPrice = SHARED_CARD_MANAGEMENT_SHEET.getRange(`H3`).getValue();
-  const postUrl = 'https://hooks.slack.com/services/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';
+  const postUrl = 'https://hooks.slack.com/services/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';
   const username = 'たくふみシート Bot';
   const jsonData ={
     "username" : username,
