@@ -1,5 +1,15 @@
+
 const TAKU_FUMI_SPREAD_SHEET = SpreadsheetApp.openById('1EmOKt3h89vG1ahKSliNoKEGKmgax0VNnmVRK-pa4DmQ');
-const SHARED_CARD_MANAGEMENT_SHEET = TAKU_FUMI_SPREAD_SHEET.getSheetByName('共有カード運用管理');
+const SHARED_CARD_MANAGEMENT_SHEET = TAKU_FUMI_SPREAD_SHEET.getSheetByName('共有カード運用管理')!;
+
+type AlertDataType = [
+  GoogleAppsScript.Base.Date | Date,
+  string,
+  string,
+  string,
+  number, 
+  string
+]
 
 function addCardUseDetail() {
   /** メール検索クエリを作成 */
@@ -19,11 +29,11 @@ function addCardUseDetail() {
   const QUERY = 'subject:' + SUBJECT + ' from:' + ADDRESS + ' after:' + DATE_AFTER + ' before:' + DATE_BEFORE;
 
   /** メールを検索 */
-  threads = GmailApp.search(QUERY);
-
+  const threads = GmailApp.search(QUERY);
+  
   /** 該当メールがあった場合 */
   if(threads.length > 0) {
-    const alertData = [];
+    const alertData: AlertDataType[] = [];
     const msgs = GmailApp.getMessagesForThreads(threads);
 
     /** テーブルの左端 */
@@ -70,7 +80,7 @@ function addCardUseDetail() {
       if (histories && histories.length){
         histories.forEach((history, index) => {
           const [year, mouth, day] = history.split('/')
-          histories[index] = new Date(Number(year), Number(mouth - 1), Number(day))
+          histories[index] = formatDate(new Date(Number(year), Number(mouth) - 1, Number(day)));
         })
       }
 
@@ -90,12 +100,12 @@ function addCardUseDetail() {
       if (useTargets && useTargets.length && useTargets[0]) {
         useTargets.forEach((useTarget) => {
           /** 比較用データ生成 */
-          const compareData = [
+          const compareData: AlertDataType = [
             mailDate ?? new Date(),
-            histories[currentNum] ?? new Date(),
+            (histories && histories[currentNum]) ?? formatDate(new Date()),
             useTargets[currentNum] ?? '', 
             '共有', 
-            -Number(prices[currentNum]) ?? 0, 
+            -Number(prices && prices[currentNum]) ?? 0, 
             '未支払'
           ];
 
@@ -126,18 +136,18 @@ function addCardUseDetail() {
 
           console.log(`
             受信日時: ${mailDate}, 
-            履歴: ${histories[currentNum]}, 
+            履歴: ${histories && histories[currentNum]}, 
             購入品名: ${useTargets[currentNum]}, 
-            金額: ${-Number(prices[currentNum])}
+            金額: ${prices && -Number(prices[currentNum])}
           `)
 
           /** 受信日時: メール受信時間を設定 */
           const dateSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`A${newRow + currentNum}`);
-          dateSell.setValue(mailDate ?? new Date());
+          dateSell.setValue(mailDate ?? formatDate(new Date()));
 
           /** 履歴: 明細日付を設定 */
           const historySell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`B${newRow + currentNum}`);
-          historySell.setValue(histories[currentNum] ?? new Date());
+          historySell.setValue((histories && histories[currentNum]) ?? formatDate(new Date()));
 
           /** 購入品名: 利用先を設定 */
           const purchaseProductNameSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`C${newRow + currentNum}`);
@@ -150,7 +160,7 @@ function addCardUseDetail() {
           /** 金額: 利用金額を負の数で設定 */
           const priceSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`E${newRow + currentNum}`);
           // 固定費の場合金額は0円にする
-          isFixedCost(useTarget) ? priceSell.setValue(0) : priceSell.setValue(-Number(prices[currentNum]) ?? 0);
+          isFixedCost(useTarget) ? priceSell.setValue(0) : priceSell.setValue(-Number(prices && prices[currentNum]) ?? 0);
 
           /** 支払状況フラグ設定 */
           const paymentStatusSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`F${newRow + currentNum}`);
@@ -160,7 +170,7 @@ function addCardUseDetail() {
           /** 固定費支払金額設定 */
           const fixedCostSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`G${newRow + currentNum}`);
           // 固定費の場合支払済にする
-          isFixedCost(useTarget) ? fixedCostSell.setValue(-Number(prices[currentNum]) ?? '') : fixedCostSell.setValue('');
+          isFixedCost(useTarget) ? fixedCostSell.setValue(-Number(prices && prices[currentNum]) ?? '') : fixedCostSell.setValue('');
 
           currentNum++
         })
@@ -174,10 +184,10 @@ function addCardUseDetail() {
 }
 
 /** スラックへの通知 */
-function slackAlert(data) {
+function slackAlert(data: AlertDataType[]) {
   const slackMessage = data.map((val) => `
   ======================================
-  利用日: ${Utilities.formatDate(val[1], 'JST', 'yyyy/M/d')}
+  利用日: ${val[1]}
   購入品名: ${val[2]}
   金額: ${Math.abs(val[4])}円
   ======================================
@@ -195,7 +205,7 @@ function slackAlert(data) {
   };
   const payload = JSON.stringify(jsonData);
 
-  const options =
+  const options: any =
   {
     "method" : "post",
     "contentType" : "application/json",
@@ -206,12 +216,12 @@ function slackAlert(data) {
 }
 
 /** 時間のフォーマット */
-function formatDate(date) {
+function formatDate(date: GoogleAppsScript.Base.Date | Date) {
   const yyyy = date.getFullYear(),
-  mm = toDoubleDigits(date.getMonth() + 1)
-  dd = toDoubleDigits(date.getDate())
-  hh = toDoubleDigits(date.getHours())
-  mi = toDoubleDigits(date.getMinutes())
+  mm = toDoubleDigits(date.getMonth() + 1),
+  dd = toDoubleDigits(date.getDate()),
+  hh = toDoubleDigits(date.getHours()),
+  mi = toDoubleDigits(date.getMinutes()),
   se = toDoubleDigits(date.getSeconds());
 
   return yyyy + '/' + mm + '/' + dd + ' ' + hh + ':' + mi + ':' + se;
@@ -223,7 +233,7 @@ function toDoubleDigits(num){
   if (num.length === 1) {
     num = "0" + num;
   }
- return num;     
+  return num;     
 };
 
 /** 固定費かどうかの判定 (金額に入れたくないものを随時追加する) */
@@ -239,9 +249,8 @@ function isFixedCost(useTarget) {
 
 /** セルの列名取得 */
 function getColName(num) {
-  let result = SHARED_CARD_MANAGEMENT_SHEET.getRange(1, num);
-  result = result.getA1Notation();
+  let result = SHARED_CARD_MANAGEMENT_SHEET.getRange(1, num).getA1Notation();
   result = result.replace(/\d/,'');
- 
+
   return result;
 }
