@@ -33,6 +33,7 @@ clasp create '新しいスプリクト名'
 新しいやつ作れる
 
 ### その他
-https://qiita.com/HeRo/items/f2ce057c6b1456e896ad
+~https://qiita.com/HeRo/items/f2ce057c6b1456e896ad~
+~TS対応したみたい！やってみたい~
 
-TS対応したみたい！やってみたい
+対応した！
