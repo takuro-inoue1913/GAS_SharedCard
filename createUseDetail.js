@@ -160,7 +160,7 @@ function addCardUseDetail() {
           /** 固定費支払金額設定 */
           const fixedCostSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(`G${newRow + currentNum}`);
           // 固定費の場合支払済にする
-          isFixedCost(useTarget) && fixedCostSell.setValue(-Number(prices[currentNum]) ?? 0);
+          isFixedCost(useTarget) ? fixedCostSell.setValue(-Number(prices[currentNum]) ?? '') : fixedCostSell.setValue('');
 
           currentNum++
         })
@@ -184,7 +184,7 @@ function slackAlert(data) {
   `)
 
   const totalPrice = SHARED_CARD_MANAGEMENT_SHEET.getRange(`H3`).getValue();
-  const postUrl = 'https://hooks.slack.com/services/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';
+  const postUrl = 'https://hooks.slack.com/services/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';
   const username = 'たくふみシート Bot';
   const jsonData ={
     "username" : username,
