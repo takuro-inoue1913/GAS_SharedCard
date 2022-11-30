@@ -36,9 +36,9 @@ function addCardUseDetail() {
   const ADDRESS = 'info@mail.rakuten-card.co.jp'; // お知らせメールの送信元
 
   /** 検索期間の初めと終わりを昨日と明日にする事で今日のみのMailを検索できる */
-  let afterDate = new Date();
+  let afterDate = new Date('2022-12-01');
   afterDate.setDate(afterDate.getDate() - 1);
-  let beforeDate = new Date();
+  let beforeDate = new Date('2022-11-10');
   beforeDate.setDate(beforeDate.getDate() + 1);
   const DATE_AFTER = Utilities.formatDate(afterDate, 'JST', 'yyyy/M/d');
   const DATE_BEFORE = Utilities.formatDate(beforeDate, 'JST', 'yyyy/M/d');
