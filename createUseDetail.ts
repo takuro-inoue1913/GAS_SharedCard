@@ -36,10 +36,9 @@ function addCardUseDetail() {
   const ADDRESS = 'info@mail.rakuten-card.co.jp'; // お知らせメールの送信元
 
   /** 検索期間の初めと終わりを昨日と明日にする事で今日のみのMailを検索できる */
-  let afterDate = new Date('2022-12-01');
-  console.log('afterDate', afterDate);
+  let afterDate = new Date();
   afterDate.setDate(afterDate.getDate() - 1);
-  let beforeDate = new Date('2022-11-10');
+  let beforeDate = new Date();
   beforeDate.setDate(beforeDate.getDate() + 1);
   const DATE_AFTER = Utilities.formatDate(afterDate, 'JST', 'yyyy/M/d');
   const DATE_BEFORE = Utilities.formatDate(beforeDate, 'JST', 'yyyy/M/d');
@@ -213,7 +212,7 @@ function slackAlert(data: AlertDataType[]) {
   `)
 
   const totalPrice = SHARED_CARD_MANAGEMENT_SHEET.getRange(`H3`).getValue();
-  const postUrl = 'https://hooks.slack.com/services/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';
+  const postUrl = 'https://hooks.slack.com/services/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';
   const username = 'たくふみシート Bot';
   const jsonData ={
     "username" : username,
