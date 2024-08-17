@@ -1,4 +1,4 @@
-function addCardUseDetail() {
+function addCardUseDetailForEpos() {
   const TAKU_FUMI_SPREAD_SHEET = SpreadsheetApp.openById(
     "1EmOKt3h89vG1ahKSliNoKEGKmgax0VNnmVRK-pa4DmQ"
   );
@@ -31,14 +31,14 @@ function addCardUseDetail() {
   const PRICE_INDEX = 4;
 
   /** メール検索クエリを作成 */
-  const SUBJECT = "カード利用のお知らせ(本人ご利用分)"; // 利用お知らせメールの件名
+  const SUBJECT = "エポスカードより「カードご利用のお知らせ」"; // 利用お知らせメールの件名
   // const ADDRESS = 'rila0327@gmail.com'; // テスト用
-  const ADDRESS = "info@mail.rakuten-card.co.jp"; // お知らせメールの送信元
+  const ADDRESS = "info@01epos.jp"; // お知らせメールの送信元
 
   /** 検索期間の初めと終わりを昨日と明日にする事で今日のみのMailを検索できる */
-  let afterDate = new Date();
+  let afterDate = new Date("2024-08-01");
   afterDate.setDate(afterDate.getDate() - 1);
-  let beforeDate = new Date();
+  let beforeDate = new Date("2024-08-30");
   beforeDate.setDate(beforeDate.getDate() + 1);
   const DATE_AFTER = Utilities.formatDate(afterDate, "JST", "yyyy/M/d");
   const DATE_BEFORE = Utilities.formatDate(beforeDate, "JST", "yyyy/M/d");
@@ -98,29 +98,36 @@ function addCardUseDetail() {
       ).getValues();
 
       /** 利用先の配列を取得 */
-      const useTargets = plainBody.match(/■利用先:.*/g);
+      const useTargets = plainBody.match(/ご利用場所：.*/g);
       if (useTargets && useTargets.length) {
         useTargets.forEach((val, index) => {
-          useTargets[index] = val.replace(/■利用先:|\s/g, "");
+          useTargets[index] = val.replace(/ご利用場所：|\s/g, "");
         });
       }
 
       /** 明細日付の配列を取得 */
-      const histories = plainBody.match(/[0-9]{4}\/[0-9]{2}\/[0-9]{2}/g);
+      const histories = plainBody.match(/ご利用日時：.*/g);
       if (histories && histories.length) {
-        histories.forEach((history, index) => {
-          const [year, mouth, day] = history.split("/");
-          histories[index] = formatDate(
-            new Date(Number(year), Number(mouth) - 1, Number(day))
+        histories.forEach((val, index) => {
+          const dateValue = val.replace(/ご利用日時：|\s/g, "");
+          // 20XX年XX月XX日XX:XX 形式を2024/08/16 17:19に変換
+          const dateArray = dateValue.split(/年|月|日|:/);
+          const date = new Date(
+            Number(dateArray[0]),
+            Number(dateArray[1]) - 1,
+            Number(dateArray[2]),
+            Number(dateArray[3]),
+            Number(dateArray[4])
           );
+          histories[index] = formatDate(date);
         });
       }
 
       /** 金額の配列を取得 */
-      const prices = plainBody.match(/■利用金額:.*円/g);
+      const prices = plainBody.match(/ご利用金額：.*円/g);
       if (prices && prices.length) {
         prices.forEach((price, index) => {
-          prices[index] = price.replace(/■利用金額:|円|,|\s/g, "");
+          prices[index] = price.replace(/ご利用金額：|円|,|\s/g, "");
         });
       }
 
@@ -265,7 +272,7 @@ function addCardUseDetail() {
       username: username,
       channel: "C07HCMBEHNE",
       text: `<@U01AP8MAZNX> <@U01AP8QRE2X>\n
-      楽天カード利用明細を解析🤖\n
+      エポスカード利用明細を解析🤖\n
       スプレッドシートに記入完了しました！📝 支払い状況を更新してください💁‍♀️ \n
       ${rangeLink}\n
   ちなみに今の残り金額は ${totalPrice.toLocaleString()}円です。\n
@@ -308,7 +315,7 @@ function addCardUseDetail() {
   }
 
   /** 固定費かどうかの判定 (金額に入れたくないものを随時追加する) */
-  function isFixedCost(useTarget) {
+  function isFixedCost(useTarget: string) {
     if (
       /ﾄｳｷﾖｳﾃﾞﾝﾘﾖｸ|ＰｉｎＴ|ﾃﾞｲﾃｲｱｲﾄｰﾝ|東京都水道局|東京ガス/.test(useTarget)
     ) {
@@ -319,7 +326,7 @@ function addCardUseDetail() {
   }
 
   /** セルの列名取得 */
-  function getColName(num) {
+  function getColName(num: number) {
     let result = SHARED_CARD_MANAGEMENT_SHEET.getRange(1, num).getA1Notation();
     result = result.replace(/\d/, "");
 
