@@ -1,46 +1,44 @@
-const TAKU_FUMI_SPREAD_SHEET = SpreadsheetApp.openById(
-  "1EmOKt3h89vG1ahKSliNoKEGKmgax0VNnmVRK-pa4DmQ"
-);
-const SHARED_CARD_MANAGEMENT_SHEET =
-  TAKU_FUMI_SPREAD_SHEET.getSheetByName("共有カード運用管理 (2024) ")!;
-
-type AlertDataType = [
-  /** 受信日 */
-  mailDate: GoogleAppsScript.Base.Date | Date,
-  /** 明細日付 */
-  history: string,
-  /** 利用先 */
-  useTargets: string,
-  /** 支払者 */
-  payer: string,
-  /** 金額 */
-  price: number,
-  /** 支払状況 */
-  paymentStatus: string
-];
-/** 受信日 INDEX */
-const MAIL_DATE_INDEX = 0;
-/** 明細日付 INDEX */
-const HISTORY_INDEX = 1;
-/** 利用先 INDEX */
-const USE_TARGETS_INDEX = 2;
-/** 支払者 INDEX */
-const PAYER_INDEX = 3;
-/** 金額 INDEX */
-const PRICE_INDEX = 4;
-/** 支払状況 INDEX */
-const PAYMENT_STATUS_INDEX = 5;
-
 function addCardUseDetail() {
+  const TAKU_FUMI_SPREAD_SHEET = SpreadsheetApp.openById(
+    "1EmOKt3h89vG1ahKSliNoKEGKmgax0VNnmVRK-pa4DmQ"
+  );
+  const SHARED_CARD_MANAGEMENT_SHEET =
+    TAKU_FUMI_SPREAD_SHEET.getSheetByName("共有カード運用管理 (2024) ")!;
+
+  type AlertDataType = [
+    /** 受信日 */
+    mailDate: GoogleAppsScript.Base.Date | Date,
+    /** 明細日付 */
+    history: string,
+    /** 利用先 */
+    useTargets: string,
+    /** 支払者 */
+    payer: string,
+    /** 金額 */
+    price: number,
+    /** 支払状況 */
+    paymentStatus: string
+  ];
+  /** 受信日 INDEX */
+  const MAIL_DATE_INDEX = 0;
+  /** 明細日付 INDEX */
+  const HISTORY_INDEX = 1;
+  /** 利用先 INDEX */
+  const USE_TARGETS_INDEX = 2;
+  /** 支払者 INDEX */
+  const PAYER_INDEX = 3;
+  /** 金額 INDEX */
+  const PRICE_INDEX = 4;
+
   /** メール検索クエリを作成 */
   const SUBJECT = "カード利用のお知らせ(本人ご利用分)"; // 利用お知らせメールの件名
   // const ADDRESS = 'rila0327@gmail.com'; // テスト用
   const ADDRESS = "info@mail.rakuten-card.co.jp"; // お知らせメールの送信元
 
   /** 検索期間の初めと終わりを昨日と明日にする事で今日のみのMailを検索できる */
-  let afterDate = new Date();
+  let afterDate = new Date("2024-08-01");
   afterDate.setDate(afterDate.getDate() - 1);
-  let beforeDate = new Date();
+  let beforeDate = new Date("2024-08-30");
   beforeDate.setDate(beforeDate.getDate() + 1);
   const DATE_AFTER = Utilities.formatDate(afterDate, "JST", "yyyy/M/d");
   const DATE_BEFORE = Utilities.formatDate(beforeDate, "JST", "yyyy/M/d");
@@ -243,76 +241,88 @@ function addCardUseDetail() {
       slackAlert(alertData);
     }
   }
-}
 
-/** スラックへの通知 */
-function slackAlert(data: AlertDataType[]) {
-  const slackMessage = data.map(
-    (val) => `
+  /** スラックへの通知 */
+  function slackAlert(data: AlertDataType[]) {
+    const slackMessage = data.map(
+      (val) => `
   ======================================
   利用日: ${val[HISTORY_INDEX]}
   購入品名: ${val[USE_TARGETS_INDEX]}
   金額: ${Math.abs(val[PRICE_INDEX])}円
   ======================================
   `
-  );
+    );
 
-  const totalPrice = SHARED_CARD_MANAGEMENT_SHEET.getRange(`H3`).getValue();
-  const postUrl =
-    "https://hooks.slack.com/services/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";
-  const username = "たくふみシート Bot";
-  const jsonData = {
-    username: username,
-    text: `<@U01AP8MAZNX> <@U01AP8QRE2X>\nスプレッドシートに記入完了しました！📝 支払い状況を更新してください💁‍♀️ \n
-  https://docs.google.com/spreadsheets/d/1EmOKt3h89vG1ahKSliNoKEGKmgax0VNnmVRK-pa4DmQ/edit#gid=31098273 \n
+    const totalPrice = SHARED_CARD_MANAGEMENT_SHEET.getRange(`H3`).getValue();
+    const postUrl = "https://slack.com/api/chat.postMessage";
+    const username = "たくふみシート Bot";
+
+    const sheetId = TAKU_FUMI_SPREAD_SHEET.getId();
+    const rangeLink = `https://docs.google.com/spreadsheets/d/${sheetId}/edit#gid=${SHARED_CARD_MANAGEMENT_SHEET.getSheetId()}`;
+
+    const jsonData = {
+      username: username,
+      channel: "C07HCMBEHNE",
+      text: `<@U01AP8MAZNX> <@U01AP8QRE2X>\n
+      楽天カード利用明細を解析🤖\n
+      スプレッドシートに記入完了しました！📝 支払い状況を更新してください💁‍♀️ \n
+      ${rangeLink}\n
   ちなみに今の残り金額は ${totalPrice.toLocaleString()}円です。\n
   ${slackMessage}`,
-  };
-  const payload = JSON.stringify(jsonData);
+    };
+    const payload = JSON.stringify(jsonData);
 
-  const options: any = {
-    method: "post",
-    contentType: "application/json",
-    payload: payload,
-  };
+    const options: any = {
+      method: "post",
+      contentType: "application/json",
+      headers: {
+        Authorization:
+          "Bearer xoxb-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      },
+      payload: payload,
+    };
 
-  UrlFetchApp.fetch(postUrl, options);
-}
-
-/** 時間のフォーマット */
-function formatDate(date: GoogleAppsScript.Base.Date | Date) {
-  const yyyy = date.getFullYear(),
-    mm = toDoubleDigits(date.getMonth() + 1),
-    dd = toDoubleDigits(date.getDate()),
-    hh = toDoubleDigits(date.getHours()),
-    mi = toDoubleDigits(date.getMinutes()),
-    se = toDoubleDigits(date.getSeconds());
-
-  return yyyy + "/" + mm + "/" + dd + " " + hh + ":" + mi + ":" + se;
-}
-
-/** 日付の0埋め */
-function toDoubleDigits(num) {
-  num += "";
-  if (num.length === 1) {
-    num = "0" + num;
-  }
-  return num;
-}
-
-/** 固定費かどうかの判定 (金額に入れたくないものを随時追加する) */
-function isFixedCost(useTarget) {
-  if (/ﾄｳｷﾖｳﾃﾞﾝﾘﾖｸ|ＰｉｎＴ|ﾃﾞｲﾃｲｱｲﾄｰﾝ|東京都水道局|東京ガス/.test(useTarget)) {
-    return true;
+    UrlFetchApp.fetch(postUrl, options);
   }
 
-  return false;
-}
+  /** 時間のフォーマット */
+  function formatDate(date: GoogleAppsScript.Base.Date | Date) {
+    const yyyy = date.getFullYear(),
+      mm = toDoubleDigits(date.getMonth() + 1),
+      dd = toDoubleDigits(date.getDate()),
+      hh = toDoubleDigits(date.getHours()),
+      mi = toDoubleDigits(date.getMinutes()),
+      se = toDoubleDigits(date.getSeconds());
 
-/** セルの列名取得 */
-function getColName(num) {
-  let result = SHARED_CARD_MANAGEMENT_SHEET.getRange(1, num).getA1Notation();
-  result = result.replace(/\d/, "");
+    return yyyy + "/" + mm + "/" + dd + " " + hh + ":" + mi + ":" + se;
+  }
 
-  return result;
+  /** 日付の0埋め */
+  function toDoubleDigits(num) {
+    num += "";
+    if (num.length === 1) {
+      num = "0" + num;
+    }
+    return num;
+  }
+
+  /** 固定費かどうかの判定 (金額に入れたくないものを随時追加する) */
+  function isFixedCost(useTarget) {
+    if (
+      /ﾄｳｷﾖｳﾃﾞﾝﾘﾖｸ|ＰｉｎＴ|ﾃﾞｲﾃｲｱｲﾄｰﾝ|東京都水道局|東京ガス/.test(useTarget)
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /** セルの列名取得 */
+  function getColName(num) {
+    let result = SHARED_CARD_MANAGEMENT_SHEET.getRange(1, num).getA1Notation();
+    result = result.replace(/\d/, "");
+
+    return result;
+  }
 }
