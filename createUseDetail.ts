@@ -277,6 +277,7 @@ function addCardUseDetail() {
       method: "post",
       contentType: "application/json",
       headers: {
+        // GAS 側で設定する
         Authorization:
           "Bearer xoxb-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
       },
