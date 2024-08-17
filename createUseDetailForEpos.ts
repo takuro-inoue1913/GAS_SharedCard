@@ -270,7 +270,7 @@ function addCardUseDetailForEpos() {
 
     const jsonData = {
       username: username,
-      channel: "C07HCMBEHNE",
+      channel: "C03E5SJDUJW",
       text: `<@U01AP8MAZNX> <@U01AP8QRE2X>\n
       エポスカード利用明細を解析🤖\n
       スプレッドシートに記入完了しました！📝 支払い状況を更新してください💁‍♀️ \n
