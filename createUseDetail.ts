@@ -278,6 +278,7 @@ function addCardUseDetail() {
       contentType: "application/json",
       headers: {
         // GAS 側で設定する
+        // https://api.slack.com/apps/A07GXFJSLG7/oauth? の Bot User OAuth Token
         Authorization:
           "Bearer xoxb-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
       },

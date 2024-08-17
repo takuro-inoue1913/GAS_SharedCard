@@ -36,9 +36,9 @@ function addCardUseDetailForEpos() {
   const ADDRESS = "info@01epos.jp"; // お知らせメールの送信元
 
   /** 検索期間の初めと終わりを昨日と明日にする事で今日のみのMailを検索できる */
-  let afterDate = new Date("2024-08-01");
+  let afterDate = new Date();
   afterDate.setDate(afterDate.getDate() - 1);
-  let beforeDate = new Date("2024-08-30");
+  let beforeDate = new Date();
   beforeDate.setDate(beforeDate.getDate() + 1);
   const DATE_AFTER = Utilities.formatDate(afterDate, "JST", "yyyy/M/d");
   const DATE_BEFORE = Utilities.formatDate(beforeDate, "JST", "yyyy/M/d");
@@ -285,6 +285,7 @@ function addCardUseDetailForEpos() {
       contentType: "application/json",
       headers: {
         // GAS 側で設定する
+        // https://api.slack.com/apps/A07GXFJSLG7/oauth? の Bot User OAuth Token
         Authorization:
           "Bearer xoxb-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
       },
