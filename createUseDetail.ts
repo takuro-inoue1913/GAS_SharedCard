@@ -31,7 +31,11 @@ function addCardUseDetail() {
   const PRICE_INDEX = 4;
 
   /** メール検索クエリを作成 */
-  const SUBJECT = "カード利用のお知らせ(本人ご利用分)"; // 利用お知らせメールの件名
+  const SUBJECTS = [
+    "カード利用のお知らせ(本人ご利用分)",
+    "カード利用のお知らせ(家族会員ご利用分)",
+  ]; // 利用お知らせメールの件名
+
   // const ADDRESS = 'rila0327@gmail.com'; // テスト用
   const ADDRESS = "info@mail.rakuten-card.co.jp"; // お知らせメールの送信元
 
@@ -43,10 +47,14 @@ function addCardUseDetail() {
   const DATE_AFTER = Utilities.formatDate(afterDate, "JST", "yyyy/M/d");
   const DATE_BEFORE = Utilities.formatDate(beforeDate, "JST", "yyyy/M/d");
 
+  // SUBJECTをOR条件で結合
+  const SUBJECT_QUERY = `(${SUBJECTS.map(
+    (subject) => `subject:"${subject}"`
+  ).join(" OR ")})`;
+
   // const QUERY = 'subject:' + SUBJECT + ' from:' + ADDRESS; // テスト用
   const QUERY =
-    "subject:" +
-    SUBJECT +
+    SUBJECT_QUERY +
     " from:" +
     ADDRESS +
     " after:" +
