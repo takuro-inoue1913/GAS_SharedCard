@@ -83,164 +83,165 @@ function addCardUseDetailForEpos() {
         )}${lastRow}`
       );
 
-      /** 本文を取得 */
-      const plainBody = msgs[i][0].getPlainBody();
-      console.log(`メール本文: \n${plainBody}`);
+      for (let j = 0; j < msgs[i].length; j++) {
+        /** 本文を取得 */
+        const plainBody = msgs[i][j].getPlainBody();
+        console.log(`メール本文: \n${plainBody}`);
 
-      /** 受信日を取得 */
-      const mailDate = msgs[i][0].getDate();
+        /** 受信日を取得 */
+        const mailDate = msgs[i][j].getDate();
 
-      /** テーブルデータ取得 */
-      const tableData = SHARED_CARD_MANAGEMENT_SHEET.getRange(
-        `${getColName(TABLE_LEFT_MOST)}6:${getColName(
-          TABLE_RIGHT_MOST
-        )}${lastRow}`
-      ).getValues();
+        /** テーブルデータ取得 */
+        const tableData = SHARED_CARD_MANAGEMENT_SHEET.getRange(
+          `${getColName(TABLE_LEFT_MOST)}6:${getColName(
+            TABLE_RIGHT_MOST
+          )}${lastRow}`
+        ).getValues();
 
-      /** 利用先の配列を取得 */
-      const useTargets = plainBody.match(/ご利用場所：.*/g);
-      if (useTargets && useTargets.length) {
-        useTargets.forEach((val, index) => {
-          useTargets[index] = val.replace(/ご利用場所：|\s/g, "");
-        });
-      }
+        /** 利用先の配列を取得 */
+        const useTargets = plainBody.match(/ご利用場所：.*/g);
+        if (useTargets && useTargets.length) {
+          useTargets.forEach((val, index) => {
+            useTargets[index] = val.replace(/ご利用場所：|\s/g, "");
+          });
+        }
 
-      /** 明細日付の配列を取得 */
-      const histories = plainBody.match(/ご利用日時：.*/g);
-      if (histories && histories.length) {
-        histories.forEach((val, index) => {
-          const dateValue = val.replace(/ご利用日時：|\s/g, "");
-          // 20XX年XX月XX日XX:XX 形式を2024/08/16 17:19に変換
-          const dateArray = dateValue.split(/年|月|日|:/);
-          const date = new Date(
-            Number(dateArray[0]),
-            Number(dateArray[1]) - 1,
-            Number(dateArray[2]),
-            Number(dateArray[3]),
-            Number(dateArray[4])
-          );
-          histories[index] = formatDate(date);
-        });
-      }
+        /** 明細日付の配列を取得 */
+        const histories = plainBody.match(/ご利用日時：.*/g);
+        if (histories && histories.length) {
+          histories.forEach((val, index) => {
+            const dateValue = val.replace(/ご利用日時：|\s/g, "");
+            // 20XX年XX月XX日XX:XX 形式を2024/08/16 17:19に変換
+            const dateArray = dateValue.split(/年|月|日|:/);
+            const date = new Date(
+              Number(dateArray[0]),
+              Number(dateArray[1]) - 1,
+              Number(dateArray[2]),
+              Number(dateArray[3]),
+              Number(dateArray[4])
+            );
+            histories[index] = formatDate(date);
+          });
+        }
 
-      /** 金額の配列を取得 */
-      const prices = plainBody.match(/ご利用金額：.*円/g);
-      if (prices && prices.length) {
-        prices.forEach((price, index) => {
-          prices[index] = price.replace(/ご利用金額：|円|,|\s/g, "");
-        });
-      }
+        /** 金額の配列を取得 */
+        const prices = plainBody.match(/ご利用金額：.*円/g);
+        if (prices && prices.length) {
+          prices.forEach((price, index) => {
+            prices[index] = price.replace(/ご利用金額：|円|,|\s/g, "");
+          });
+        }
 
-      /**
-       * データ登録処理
-       * indexで取るとreturnで弾かれた分ずれるのでデータ挿入成功した分のみcurrentNumでカウントする
-       */
-      let currentNum = 0;
-      if (useTargets && useTargets.length && useTargets[0]) {
-        useTargets.forEach((useTarget) => {
-          /** 比較用データ生成 */
-          const compareData: AlertDataType = [
-            mailDate ?? new Date(),
-            (histories && histories[currentNum]) ?? formatDate(new Date()),
-            useTargets[currentNum] ?? "",
-            "共有",
-            -Number(prices && prices[currentNum]),
-            "未支払",
-          ];
+        /**
+         * データ登録処理
+         * indexで取るとreturnで弾かれた分ずれるのでデータ挿入成功した分のみcurrentNumでカウントする
+         */
+        let currentNum = 0;
+        if (useTargets && useTargets.length && useTargets[0]) {
+          useTargets.forEach((useTarget) => {
+            /** 比較用データ生成 */
+            const compareData: AlertDataType = [
+              mailDate ?? new Date(),
+              (histories && histories[currentNum]) ?? formatDate(new Date()),
+              useTargets[currentNum] ?? "",
+              "共有",
+              -Number(prices && prices[currentNum]),
+              "未支払",
+            ];
 
-          /** 受信日時、購入品名もしくは金額が一緒の場合は処理をスキップ (重複を防ぐため) */
-          if (
-            tableData.find((val) => {
-              // 受信日時
-              return (
-                val[MAIL_DATE_INDEX] &&
-                formatDate(val[MAIL_DATE_INDEX]) ===
-                  formatDate(compareData[MAIL_DATE_INDEX]) &&
-                // 購入品名
-                (val[USE_TARGETS_INDEX] === compareData[USE_TARGETS_INDEX] ||
+            /** 受信日時、購入品名と金額が一緒の場合は処理をスキップ (重複を防ぐため) */
+            if (
+              tableData.find((val) => {
+                // 受信日時
+                return (
+                  val[MAIL_DATE_INDEX] &&
+                  formatDate(val[MAIL_DATE_INDEX]) ===
+                    formatDate(compareData[MAIL_DATE_INDEX]) &&
+                  // 購入品名
+                  val[USE_TARGETS_INDEX] === compareData[USE_TARGETS_INDEX] &&
                   // 金額
-                  val[PRICE_INDEX] === compareData[PRICE_INDEX])
-              );
-            }) !== undefined
-          ) {
-            return;
-          }
+                  val[PRICE_INDEX] === compareData[PRICE_INDEX]
+                );
+              }) !== undefined
+            ) {
+              return;
+            }
 
-          /** Slackアラート用のデータ作成 */
-          alertData.push(compareData);
+            /** Slackアラート用のデータ作成 */
+            alertData.push(compareData);
 
-          /** オートフィルを反映させたい範囲 */
-          const destination = SHARED_CARD_MANAGEMENT_SHEET.getRange(
-            `${getColName(TABLE_LEFT_MOST)}${newRow + currentNum}:${getColName(
-              TABLE_RIGHT_MOST
-            )}${newRow + currentNum}`
-          );
+            /** オートフィルを反映させたい範囲 */
+            const destination = SHARED_CARD_MANAGEMENT_SHEET.getRange(
+              `${getColName(TABLE_LEFT_MOST)}${
+                newRow + currentNum
+              }:${getColName(TABLE_RIGHT_MOST)}${newRow + currentNum}`
+            );
 
-          /** 元のデータを新規で追加する行にコピーする */
-          sourceRange.copyTo(destination);
+            /** 元のデータを新規で追加する行にコピーする */
+            sourceRange.copyTo(destination);
 
-          console.log(`
+            console.log(`
             受信日時: ${mailDate}, 
             履歴: ${histories && histories[currentNum]}, 
             購入品名: ${useTargets[currentNum]}, 
             金額: ${prices && -Number(prices[currentNum])}
           `);
 
-          /** 受信日時: メール受信時間を設定 */
-          const dateSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(
-            `A${newRow + currentNum}`
-          );
-          dateSell.setValue(mailDate ?? formatDate(new Date()));
+            /** 受信日時: メール受信時間を設定 */
+            const dateSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(
+              `A${newRow + currentNum}`
+            );
+            dateSell.setValue(mailDate ?? formatDate(new Date()));
 
-          /** 履歴: 明細日付を設定 */
-          const historySell = SHARED_CARD_MANAGEMENT_SHEET.getRange(
-            `B${newRow + currentNum}`
-          );
-          historySell.setValue(
-            (histories && histories[currentNum]) ?? formatDate(new Date())
-          );
+            /** 履歴: 明細日付を設定 */
+            const historySell = SHARED_CARD_MANAGEMENT_SHEET.getRange(
+              `B${newRow + currentNum}`
+            );
+            historySell.setValue(
+              (histories && histories[currentNum]) ?? formatDate(new Date())
+            );
 
-          /** 購入品名: 利用先を設定 */
-          const purchaseProductNameSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(
-            `C${newRow + currentNum}`
-          );
-          purchaseProductNameSell.setValue(useTargets[currentNum] ?? "");
+            /** 購入品名: 利用先を設定 */
+            const purchaseProductNameSell =
+              SHARED_CARD_MANAGEMENT_SHEET.getRange(`C${newRow + currentNum}`);
+            purchaseProductNameSell.setValue(useTargets[currentNum] ?? "");
 
-          /** 支払者: デフォルトは「共有」に設定 */
-          const payerSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(
-            `D${newRow + currentNum}`
-          );
-          payerSell.setValue("共有");
+            /** 支払者: デフォルトは「共有」に設定 */
+            const payerSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(
+              `D${newRow + currentNum}`
+            );
+            payerSell.setValue("共有");
 
-          /** 金額: 利用金額を負の数で設定 */
-          const priceSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(
-            `E${newRow + currentNum}`
-          );
-          // 固定費の場合金額は0円にする
-          isFixedCost(useTarget)
-            ? priceSell.setValue(0)
-            : priceSell.setValue(-Number(prices && prices[currentNum]));
+            /** 金額: 利用金額を負の数で設定 */
+            const priceSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(
+              `E${newRow + currentNum}`
+            );
+            // 固定費の場合金額は0円にする
+            isFixedCost(useTarget)
+              ? priceSell.setValue(0)
+              : priceSell.setValue(-Number(prices && prices[currentNum]));
 
-          /** 支払状況フラグ設定 */
-          const paymentStatusSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(
-            `F${newRow + currentNum}`
-          );
-          // 固定費の場合支払済にする
-          isFixedCost(useTarget)
-            ? paymentStatusSell.setValue("支払済")
-            : paymentStatusSell.setValue("未入金");
+            /** 支払状況フラグ設定 */
+            const paymentStatusSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(
+              `F${newRow + currentNum}`
+            );
+            // 固定費の場合支払済にする
+            isFixedCost(useTarget)
+              ? paymentStatusSell.setValue("支払済")
+              : paymentStatusSell.setValue("未入金");
 
-          /** 固定費支払金額設定 */
-          const fixedCostSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(
-            `G${newRow + currentNum}`
-          );
-          // 固定費の場合支払済にする
-          isFixedCost(useTarget)
-            ? fixedCostSell.setValue(-Number(prices && prices[currentNum]))
-            : fixedCostSell.setValue("");
+            /** 固定費支払金額設定 */
+            const fixedCostSell = SHARED_CARD_MANAGEMENT_SHEET.getRange(
+              `G${newRow + currentNum}`
+            );
+            // 固定費の場合支払済にする
+            isFixedCost(useTarget)
+              ? fixedCostSell.setValue(-Number(prices && prices[currentNum]))
+              : fixedCostSell.setValue("");
 
-          currentNum++;
-        });
+            currentNum++;
+          });
+        }
       }
     }
     /** Slackへデータ送信 */
