@@ -257,7 +257,7 @@ function addCardUseDetail() {
     const slackMessage = data.map(
       (val) => `
   ======================================
-  利用日: ${val[HISTORY_INDEX]}
+  利用日: ${Utilities.formatDate(val[MAIL_DATE_INDEX], "JST", "yyyy/MM/dd")}
   購入品名: ${val[USE_TARGETS_INDEX]}
   金額: ${Math.abs(val[PRICE_INDEX])}円
   ======================================
