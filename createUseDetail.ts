@@ -269,7 +269,10 @@ function addCardUseDetail() {
     const username = "たくふみシート Bot";
 
     const sheetId = TAKU_FUMI_SPREAD_SHEET.getId();
-    const rangeLink = `https://docs.google.com/spreadsheets/d/${sheetId}/edit#gid=${SHARED_CARD_MANAGEMENT_SHEET.getSheetId()}`;
+    // リンクを最終行から10行前の行に設定
+    const rangeLink = `https://docs.google.com/spreadsheets/d/${sheetId}/edit#gid=${SHARED_CARD_MANAGEMENT_SHEET.getSheetId()}&range=${
+      SHARED_CARD_MANAGEMENT_SHEET.getLastRow() - 10
+    }:${SHARED_CARD_MANAGEMENT_SHEET.getLastRow() - 10}`;
 
     const jsonData = {
       username: username,
