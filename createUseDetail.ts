@@ -287,10 +287,10 @@ function addCardUseDetail() {
       method: "post",
       contentType: "application/json",
       headers: {
-        // GAS 側で設定する
-        // https://api.slack.com/apps/A07GXFJSLG7/oauth? の Bot User OAuth Token
-        Authorization:
-          "Bearer xoxb-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        // https://api.slack.com/apps/A07GXFJSLG7/oauth?
+        Authorization: `Bearer ${PropertiesService.getScriptProperties().getProperty(
+          "BOT_USER_OAUTH_TOKEN"
+        )}`,
       },
       payload: payload,
     };
@@ -322,7 +322,9 @@ function addCardUseDetail() {
   /** 固定費かどうかの判定 (金額に入れたくないものを随時追加する) */
   function isFixedCost(useTarget: string) {
     if (
-      /ﾄｳｷﾖｳﾃﾞﾝﾘﾖｸ|ＰｉｎＴ|ﾃﾞｲﾃｲｱｲﾄｰﾝ|ﾃﾞｲﾃｲｱｲﾄ-ﾝ|ＫＤＤＩご利用料金|東京都水道局|東京ガス/.test(useTarget)
+      /ﾄｳｷﾖｳﾃﾞﾝﾘﾖｸ|ＰｉｎＴ|ﾃﾞｲﾃｲｱｲﾄｰﾝ|ﾃﾞｲﾃｲｱｲﾄ-ﾝ|ＫＤＤＩご利用料金|東京都水道局|東京ガス/.test(
+        useTarget
+      )
     ) {
       return true;
     }
