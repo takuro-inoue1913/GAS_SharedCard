@@ -2,8 +2,9 @@ function addCardUseDetail() {
   const TAKU_FUMI_SPREAD_SHEET = SpreadsheetApp.openById(
     "1EmOKt3h89vG1ahKSliNoKEGKmgax0VNnmVRK-pa4DmQ"
   );
-  const SHARED_CARD_MANAGEMENT_SHEET =
-    TAKU_FUMI_SPREAD_SHEET.getSheetByName("共有カード運用管理 (2024) ")!;
+  const SHARED_CARD_MANAGEMENT_SHEET = TAKU_FUMI_SPREAD_SHEET.getSheetByName(
+    `共有カード運用管理 (${Utilities.formatDate(new Date(), "JST", "yyyy")}) `
+  )!;
 
   type AlertDataType = [
     /** 受信日 */
