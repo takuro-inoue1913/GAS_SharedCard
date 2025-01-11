@@ -35,6 +35,7 @@ function addCardUseDetail() {
   const SUBJECTS = [
     "カード利用のお知らせ(本人ご利用分)",
     "カード利用のお知らせ(家族会員ご利用分)",
+    "カード利用のお知らせ(本人・家族会員ご利用分)",
   ]; // 利用お知らせメールの件名
 
   // const ADDRESS = 'rila0327@gmail.com'; // テスト用
