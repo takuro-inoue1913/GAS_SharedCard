@@ -1,0 +1,38 @@
+name: Deploy GAS Project
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install clasp
+        run: npm install -g @google/clasp@latest
+
+      - name: Setup clasp credentials
+        run: |
+          mkdir -p ~/.config/@google
+          echo "${{ secrets.CLASP_CREDENTIALS }}" | base64 -d > ~/.clasprc.json
+          echo "${{ secrets.CLASP_CREDENTIALS }}" | base64 -d > ~/.config/@google/clasp.json
+          echo "Credentials file created successfully"
+
+      - name: Deploy GAS project
+        run: clasp push -f
+
+      - name: Deployment completed
+        run: echo "GAS project has been deployed successfully!"
